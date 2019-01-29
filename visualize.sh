@@ -47,14 +47,14 @@ for az in $(manifest | jq -r '.instance_groups | map(.azs) | flatten | unique | 
             }
             id="$(_jq '.name' | id_escape)_$az"
             name=$(_jq '.name')
-            jobs=$(_jq '.jobs | map(.name) | join("\n")')
+            jobs=$(_jq '.jobs | map("|_ \(.name)") | join("\n")')
+            type=$(_jq '.vm_type')
             iazs=$(_jq -c '. as $ig | [$ig.azs, ([[range(0;$ig.instances)] | _nwise($ig.instances / ($ig.azs | length) | ceil)] | map(length))] | transpose')
             instances=$(echo $iazs | jq -r --arg az $az 'map(select(.[0] == $az))[0][1] // 0')
 
             uml "\
             node ${id} [
-            <b>${name} ${instances}
-            ----
+            **${name}** ${type} <&x> ${instances}
             ${jobs}
             ]\n"
 
