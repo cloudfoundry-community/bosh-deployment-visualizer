@@ -27,14 +27,6 @@ uml "center header
 = Deployment: $deployment
 endheader\n"
 
-for network in $(manifest | jq -r '.instance_groups | map(.networks[].name) | flatten | unique | .[]'); do
-    id="$(echo $network | id_escape)"
-    uml "\
-    cloud ${id} [
-    <b>network: ${network}
-    ]\n"
-done
-
 for az in $(manifest | jq -r '.instance_groups | map(.azs) | flatten | unique | .[]'); do
     uml "frame $az {"
     groups=$(manifest | jq -c --arg az $az '.instance_groups | map(select((.instances != 0) and (.azs | contains([$az])))) | map(@base64) | _nwise(3)')
@@ -48,6 +40,7 @@ for az in $(manifest | jq -r '.instance_groups | map(.azs) | flatten | unique | 
             id="$(_jq '.name' | id_escape)_$az"
             name=$(_jq '.name')
             jobs=$(_jq '.jobs | map("|_ \(.name)") | join("\n")')
+            networks=$(_jq '.networks | map("<&cloud> \(.name)") | join("\n")')
             type=$(_jq '.vm_type')
             iazs=$(_jq -c '. as $ig | [$ig.azs, ([[range(0;$ig.instances)] | _nwise($ig.instances / ($ig.azs | length) | ceil)] | map(length))] | transpose')
             instances=$(echo $iazs | jq -r --arg az $az 'map(select(.[0] == $az))[0][1] // 0')
@@ -56,21 +49,20 @@ for az in $(manifest | jq -r '.instance_groups | map(.azs) | flatten | unique | 
             node ${id} [
             **${name}** ${type} <&x> ${instances}
             ${jobs}
-            ]\n"
 
-            for network in $(_jq '.networks[].name'); do
-                nid=$(echo $network | id_escape)
-                uml "$id -0- $nid"
-            done
+            ----
+            ${networks}
+            ]\n"
         done
         last_group_current_name="$(echo "$group" | jq -r '.[0]' | base64 --decode | jq -r '.name' | id_escape)_$az"
         if [ "${last_group_last_name}" != "" ]; then
-            uml "${last_group_last_name} -[hidden]---> ${last_group_current_name}"
+            uml "${last_group_last_name} -[hidden]- ${last_group_current_name}"
         fi
         last_group_last_name="${last_group_current_name}"
 
         uml "}" # close together
     done
+    last_group_last_name=""
     uml "}" # close az frame
 done
 
