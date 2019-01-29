@@ -20,6 +20,7 @@ uml() {
 }
 
 deployment=$(manifest | jq -r '.name')
+addons=$(manifest | jq -r '.addons // [] | map(.jobs | map("|_ //\(.name)//")) | flatten | join("\n")')
 
 uml "@startuml\n"
 
@@ -44,6 +45,10 @@ for az in $(manifest | jq -r '.instance_groups | map(.azs) | flatten | unique | 
             type=$(_jq '.vm_type')
             iazs=$(_jq -c '. as $ig | [$ig.azs, ([[range(0;$ig.instances)] | _nwise($ig.instances / ($ig.azs | length) | ceil)] | map(length))] | transpose')
             instances=$(echo $iazs | jq -r --arg az $az 'map(select(.[0] == $az))[0][1] // 0')
+
+            if [[ "${addons}" != "" ]]; then
+                jobs="${jobs}\n${addons}"
+            fi
 
             uml "\
             node ${id} [
