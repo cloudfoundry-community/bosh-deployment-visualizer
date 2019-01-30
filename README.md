@@ -5,7 +5,7 @@
 Please make sure the following tools are installed:
 
 - [spruce](https://github.com/geofffranks/spruce)
-- [jq](https://stedolan.github.io/jq/download/)
+- [jq](https://stedolan.github.io/jq/download/) (needs at least 1.6)
 - [plantuml](http://plantuml.com/)
 
 When using macOS these can be installed via brew:
