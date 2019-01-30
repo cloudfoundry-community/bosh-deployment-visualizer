@@ -29,7 +29,8 @@ uml "center header
 endheader\n"
 
 for az in $(manifest | jq -r '.instance_groups | map(.azs) | flatten | unique | .[]'); do
-    uml "frame $az {"
+    aid=$(echo $az | id_escape)
+    uml "frame $aid {"
     groups=$(manifest | jq -c --arg az $az '.instance_groups | map(select((.instances != 0) and (.azs | contains([$az])))) | map(@base64) | _nwise(3)')
     last_group_link_name=""
     for group in $(echo "$groups"); do
@@ -38,7 +39,7 @@ for az in $(manifest | jq -r '.instance_groups | map(.azs) | flatten | unique | 
             _jq() {
                 echo "${instance}" | base64 --decode | jq -r "$@"
             }
-            id="$(_jq '.name' | id_escape)_$az"
+            id="$(_jq '.name' | id_escape)_$aid"
             name=$(_jq '.name')
             jobs=$(_jq '.jobs | map("|_ \(.name)") | join("\n")')
             networks=$(_jq '.networks | map("<&cloud> \(.name)") | join("\n")')
@@ -59,7 +60,7 @@ for az in $(manifest | jq -r '.instance_groups | map(.azs) | flatten | unique | 
             ${networks}
             ]\n"
         done
-        last_group_current_name="$(echo "$group" | jq -r '.[0]' | base64 --decode | jq -r '.name' | id_escape)_$az"
+        last_group_current_name="$(echo "$group" | jq -r '.[0]' | base64 --decode | jq -r '.name' | id_escape)_$aid"
         if [ "${last_group_last_name}" != "" ]; then
             uml "${last_group_last_name} -[hidden]- ${last_group_current_name}"
         fi
