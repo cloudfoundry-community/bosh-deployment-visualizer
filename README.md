@@ -34,3 +34,5 @@ To view the result:
 ``` bash
 open cf.png
 ```
+
+![image](https://user-images.githubusercontent.com/4748380/52331329-27ed4480-29f8-11e9-9d71-2aa88a91ca6d.png)
